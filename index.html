@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Commerce Login / Registration</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #4f46e5;
+            --primary-hover: #4338ca;
+            --bg-color: #f9fafb;
+            --text-color: #111827;
+            --text-muted: #6b7280;
+            --card-bg: #ffffff;
+            --border-color: #e5e7eb;
+            --error-color: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .app-container {
+            width: 100%;
+            max-width: 1200px;
+            padding: 20px;
+        }
+
+        .view-container {
+            display: none;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .view-container.active {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
+        /* Auth Card */
+        .auth-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            width: 100%;
+            max-width: 400px;
+            overflow: hidden;
+        }
+
+        .auth-tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 16px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+            color: var(--text-muted);
+            transition: all 0.2s;
+            outline: none;
+        }
+
+        .tab:hover {
+            color: var(--text-color);
+        }
+
+        .tab.active {
+            color: var(--primary-color);
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .form {
+            display: none;
+            padding: 32px;
+        }
+
+        .form.active {
+            display: block;
+        }
+
+        .form h2 {
+            margin-bottom: 24px;
+            font-size: 24px;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .error-msg {
+            color: var(--error-color);
+            font-size: 14px;
+            margin-bottom: 16px;
+            min-height: 20px;
+            text-align: center;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--border-color);
+        }
+
+        /* Dashboard */
+        #dashboard-view {
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 32px;
+        }
+
+        .dashboard-header .btn {
+            width: auto;
+            padding: 8px 16px;
+        }
+
+        .dashboard-content {
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+        }
+
+        .dashboard-content h1 {
+            margin-bottom: 16px;
+        }
+
+        .info-card {
+            margin-top: 32px;
+            padding: 24px;
+            background: var(--card-bg);
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            text-align: left;
+        }
+
+        .info-card h3 {
+            margin-bottom: 12px;
+            color: var(--primary-color);
+        }
+
+        .info-card p {
+            margin-bottom: 8px;
+            color: var(--text-muted);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Loading Screen */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--border-color);
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loader">
+        <div class="spinner"></div>
+    </div>
+
+    <div id="app" class="app-container">
+        
+        <!-- Auth View -->
+        <div id="auth-view" class="view-container active">
+            <div class="auth-card">
+                <div class="auth-tabs">
+                    <button id="tab-login" class="tab active" onclick="toggleForm('login')">Login</button>
+                    <button id="tab-register" class="tab" onclick="toggleForm('register')">Register</button>
+                </div>
+                
+                <!-- Login Form -->
+                <form id="login-form" class="form active">
+                    <h2>Welcome Back</h2>
+                    <div class="form-group">
+                        <label for="login-email">Email</label>
+                        <input type="email" id="login-email" required placeholder="john@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" required placeholder="••••••••">
+                    </div>
+                    <div class="error-msg" id="login-error"></div>
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </form>
+
+                <!-- Registration Form -->
+                <form id="register-form" class="form">
+                    <h2>Create an Account</h2>
+                    <div class="form-group">
+                        <label for="reg-name">Full Name</label>
+                        <input type="text" id="reg-name" required placeholder="John Doe">
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-email">Email</label>
+                        <input type="email" id="reg-email" required placeholder="john@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-password">Password</label>
+                        <input type="password" id="reg-password" required minlength="6" placeholder="Min. 6 characters">
+                    </div>
+                    <div class="error-msg" id="reg-error"></div>
+                    <button type="submit" class="btn btn-primary">Register</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Dashboard View -->
+        <div id="dashboard-view" class="view-container">
+            <header class="dashboard-header">
+                <h2>E-Commerce Mock</h2>
+                <button onclick="logout()" class="btn btn-secondary">Logout</button>
+            </header>
+            <main class="dashboard-content">
+                <h1 id="welcome-msg">Welcome, User!</h1>
+                <p>This is the placeholder Home page for Module 1.</p>
+                <div class="info-card">
+                    <h3>Integration Info</h3>
+                    <p>The session state is currently saved in <code>localStorage</code> under the key <strong>"session"</strong>.</p>
+                    <p>Modules 2 (Search & Cart) and 3 (Checkout & Payment) can read this session data.</p>
+                </div>
+            </main>
+        </div>
+
+    </div>
+    
+    <script>
+        /**
+         * E-Commerce Login / Registration Module
+         * 
+         * Mock Database Implementation:
+         * We use a "users" array saved in localStorage to simulate a backend DB.
+         * 
+         * Session Integration for Modules 2 & 3:
+         * The session state is stored in localStorage under the key 'session'.
+         * Shape:
+         * {
+         *   isLoggedIn: boolean,
+         *   loginTime: string (ISO),
+         *   user: {
+         *     name: string,
+         *     email: string
+         *   }
+         * }
+         * 
+         * Other modules can read this by doing:
+         * const session = JSON.parse(localStorage.getItem('session'));
+         * if(session && session.isLoggedIn) { ... }
+         */
+
+        // Initialize Mock DB if not exists
+        if (!localStorage.getItem('users')) {
+            localStorage.setItem('users', JSON.stringify([]));
+        }
+
+        // Check if user is already logged in on load
+        document.addEventListener('DOMContentLoaded', () => {
+            checkSession();
+        });
+
+        function toggleForm(formType) {
+            // Update tabs
+            document.getElementById('tab-login').classList.remove('active');
+            document.getElementById('tab-register').classList.remove('active');
+            document.getElementById('tab-' + formType).classList.add('active');
+
+            // Update forms
+            document.getElementById('login-form').classList.remove('active');
+            document.getElementById('register-form').classList.remove('active');
+            document.getElementById(formType + '-form').classList.add('active');
+
+            // Clear errors
+            document.getElementById('login-error').innerText = '';
+            document.getElementById('reg-error').innerText = '';
+        }
+
+        // Handle Registration
+        document.getElementById('register-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim().toLowerCase();
+            const password = document.getElementById('reg-password').value;
+            const errorDiv = document.getElementById('reg-error');
+            
+            // Basic validation
+            if (!name || !email || !password) {
+                errorDiv.innerText = "All fields are required.";
+                return;
+            }
+
+            if (password.length < 6) {
+                errorDiv.innerText = "Password must be at least 6 characters.";
+                return;
+            }
+
+            // Mock DB Check
+            let users = JSON.parse(localStorage.getItem('users'));
+            const exists = users.find(u => u.email === email);
+            
+            if (exists) {
+                errorDiv.innerText = "Email already registered.";
+                return;
+            }
+
+            // Create user
+            const newUser = { name, email, password }; // In a real app, never store plain text passwords!
+            users.push(newUser);
+            localStorage.setItem('users', JSON.stringify(users));
+
+            // Create Session
+            createSession(newUser);
+        });
+
+        // Handle Login
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const email = document.getElementById('login-email').value.trim().toLowerCase();
+            const password = document.getElementById('login-password').value;
+            const errorDiv = document.getElementById('login-error');
+
+            // Mock DB Check
+            let users = JSON.parse(localStorage.getItem('users'));
+            const user = users.find(u => u.email === email && u.password === password);
+
+            if (!user) {
+                errorDiv.innerText = "Invalid email or password.";
+                return;
+            }
+
+            // Create Session
+            createSession(user);
+        });
+
+        // Session Management
+        function createSession(user) {
+            const sessionObj = {
+                isLoggedIn: true,
+                loginTime: new Date().toISOString(),
+                user: {
+                    name: user.name,
+                    email: user.email
+                }
+            };
+
+            localStorage.setItem('session', JSON.stringify(sessionObj));
+            
+            // Clear forms
+            document.getElementById('login-form').reset();
+            document.getElementById('register-form').reset();
+            
+            showDashboard();
+        }
+
+        function checkSession() {
+            const sessionData = localStorage.getItem('session');
+            if (sessionData) {
+                const session = JSON.parse(sessionData);
+                if (session.isLoggedIn) {
+                    showDashboard();
+                    return;
+                }
+            }
+            showAuth();
+        }
+
+        function logout() {
+            localStorage.removeItem('session');
+            showAuth();
+        }
+
+        // UI Views
+        function showDashboard() {
+            document.getElementById('auth-view').classList.remove('active');
+            document.getElementById('dashboard-view').classList.add('active');
+            
+            const session = JSON.parse(localStorage.getItem('session'));
+            document.getElementById('welcome-msg').innerText = `Welcome, ${session.user.name}!`;
+        }
+
+        function showAuth() {
+            document.getElementById('dashboard-view').classList.remove('active');
+            document.getElementById('auth-view').classList.add('active');
+            toggleForm('login');
+        }
+
+        // Handle Loading Screen (1 second)
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const loader = document.getElementById('loader');
+                loader.style.opacity = '0';
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                }, 500); // Wait for fade out transition
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
