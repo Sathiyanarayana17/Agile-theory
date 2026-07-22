@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Amazon Sign-In</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: "Amazon Ember", Arial, sans-serif;
+            background-color: #fff;
+            color: #111;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .logo-container { margin: 14px 0 18px; text-align: center; }
+        .logo-container img { width: 103px; object-fit: contain; }
+        .auth-container { width: 100%; max-width: 350px; margin: 0 auto; }
+        .auth-card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px 26px;
+            background-color: #fff;
+            margin-bottom: 22px;
+        }
+        .auth-card h1 { font-weight: 400; font-size: 28px; margin-bottom: 14px; line-height: 1.2; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label {
+            display: block; font-size: 13px; font-weight: 700; margin-bottom: 2px; padding-left: 2px;
+        }
+        .form-group input {
+            width: 100%; padding: 3px 7px; height: 31px;
+            border: 1px solid #a6a6a6; border-top-color: #949494;
+            border-radius: 3px; box-shadow: 0 1px 0 rgba(255,255,255,.5), 0 1px 0 rgba(0,0,0,.07) inset;
+            font-size: 13px; outline: none;
+        }
+        .form-group input:focus { border-color: #e77600; box-shadow: 0 0 3px 2px rgba(228,121,17,.5); }
+        .btn {
+            width: 100%; padding: 0; text-align: center; border-radius: 3px;
+            font-size: 13px; cursor: pointer; height: 29px; outline: none;
+        }
+        .btn-primary {
+            background: linear-gradient(to bottom,#f7dfa5,#f0c14b);
+            border: 1px solid; border-color: #a88734 #9c7e31 #846a29; color: #111;
+        }
+        .btn-primary:hover { background: linear-gradient(to bottom,#f5d78e,#eeb933); }
+        .legal-text { font-size: 12px; margin-top: 18px; line-height: 1.5; }
+        .legal-text a { color: #0066c0; text-decoration: none; }
+        .legal-text a:hover { text-decoration: underline; color: #c45500; }
+        .divider { position: relative; text-align: center; margin-top: 22px; margin-bottom: 14px; }
+        .divider::before {
+            content: ""; position: absolute; top: 50%; left: 0; right: 0;
+            height: 1px; background-color: #e7e7e7; z-index: 1;
+        }
+        .divider span {
+            position: relative; background-color: #fff; padding: 0 8px;
+            color: #767676; font-size: 12px; z-index: 2;
+        }
+        .btn-secondary {
+            background: linear-gradient(to bottom,#f6f7f9,#e7e9ec);
+            border: 1px solid; border-color: #adb1b8 #a2a6ac #8d9096;
+            color: #111; height: 31px; display: flex; align-items: center;
+            justify-content: center; text-decoration: none; width: 100%;
+            border-radius: 3px; font-size: 13px; cursor: pointer;
+        }
+        .btn-secondary:hover { background: linear-gradient(to bottom,#f3f4f6,#d5d8dc); }
+        .view-container { display: none; }
+        .view-container.active { display: block; flex: 1; width: 100%; }
+        .error-box {
+            display: none; border: 1px solid #cc0000; border-radius: 4px;
+            padding: 14px 18px; margin-bottom: 14px;
+            box-shadow: 0 0 0 4px #fae1e1 inset; align-items: flex-start;
+        }
+        .error-box.active { display: flex; }
+        .error-box-icon { color: #cc0000; font-size: 24px; margin-right: 10px; font-weight: bold; line-height: 1;}
+        .error-box-content h4 { color: #cc0000; font-size: 14px; margin-bottom: 4px; font-weight: 400; }
+        .error-box-content p { font-size: 13px; }
+        #dashboard-view { max-width: 800px; width: 100%; padding: 20px; margin: 0 auto; flex: 1; }
+        .dashboard-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 20px; }
+        .dashboard-header .logo-container { margin: 0; }
+        .dashboard-header img { width: 80px; }
+        .dashboard-content h1 { font-size: 24px; font-weight: 400; margin-bottom: 15px; }
+        .dashboard-content p { font-size: 14px; margin-bottom: 15px; }
+        .footer { border-top: 1px solid #ddd; width: 100%; padding: 30px 0; background: linear-gradient(to bottom,rgba(0,0,0,.14),rgba(0,0,0,.03) 3px,transparent); margin-top: auto;}
+        .footer-links { text-align: center; margin-bottom: 10px; }
+        .footer-links a { color: #0066c0; text-decoration: none; font-size: 11px; margin: 0 10px; }
+        .footer-links a:hover { text-decoration: underline; }
+        .footer-copy { text-align: center; font-size: 11px; color: #555; }
+    </style>
+</head>
+<body>
+    <div id="auth-view" class="view-container active">
+        <div class="logo-container">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg" alt="Amazon Logo">
+        </div>
+        
+        <div class="auth-container">
+            <!-- Global Error Box -->
+            <div id="auth-error-box" class="error-box">
+                <div class="error-box-icon">!</div>
+                <div class="error-box-content">
+                    <h4>There was a problem</h4>
+                    <p id="auth-error-msg"></p>
+                </div>
+            </div>
+
+            <!-- Login Form -->
+            <div id="login-container" class="active" style="display: block;">
+                <div class="auth-card">
+                    <h1>Sign-In</h1>
+                    <form id="login-form">
+                        <div class="form-group">
+                            <label for="login-email">Email or mobile phone number</label>
+                            <input type="email" id="login-email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="login-password">Password</label>
+                            <input type="password" id="login-password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Continue</button>
+                        
+                        <div class="legal-text">
+                            By continuing, you agree to Amazon's <a href="#">Conditions of Use</a> and <a href="#">Privacy Notice</a>.
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="divider">
+                    <span>New to Amazon?</span>
+                </div>
+                
+                <button type="button" class="btn btn-secondary" onclick="toggleAuthMode('register')">Create your Amazon account</button>
+            </div>
+
+            <!-- Registration Form -->
+            <div id="register-container" style="display: none;">
+                <div class="auth-card">
+                    <h1>Create account</h1>
+                    <form id="register-form">
+                        <div class="form-group">
+                            <label for="reg-name">Your name</label>
+                            <input type="text" id="reg-name" required placeholder="First and last name">
+                        </div>
+                        <div class="form-group">
+                            <label for="reg-email">Mobile number or email</label>
+                            <input type="email" id="reg-email" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="reg-password">Password</label>
+                            <input type="password" id="reg-password" required placeholder="At least 6 characters">
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="margin-top: 10px;">Continue</button>
+                        
+                        <div class="legal-text">
+                            By creating an account, you agree to Amazon's <a href="#">Conditions of Use</a> and <a href="#">Privacy Notice</a>.
+                        </div>
+                        
+                        <div style="margin-top: 20px; font-size: 13px;">
+                            Already have an account? <a href="#" onclick="toggleAuthMode('login'); return false;" style="color: #0066c0; text-decoration: none;">Sign in <span>&#9656;</span></a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard View -->
+    <div id="dashboard-view" class="view-container">
+        <header class="dashboard-header">
+            <div class="logo-container">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/a/a9/Amazon_logo.svg" alt="Amazon Logo">
+            </div>
+            <button onclick="logout()" class="btn btn-secondary" style="width: auto; padding: 0 15px;">Sign Out</button>
+        </header>
+        <main class="dashboard-content">
+            <h1 id="welcome-msg">Welcome, User!</h1>
+            <p>This is the placeholder Home page for Module 1.</p>
+            <div style="padding: 20px; border: 1px solid #ddd; border-radius: 4px; background: #fafafa; margin-top: 20px;">
+                <h3 style="margin-bottom: 10px; font-weight: 400; color: #111;">Integration Info</h3>
+                <p style="margin-bottom: 5px;">The session state is currently saved in <code>localStorage</code> under the key <strong>"session"</strong>.</p>
+                <p>Modules 2 (Search & Cart) and 3 (Checkout & Payment) can read this session data.</p>
+            </div>
+        </main>
+    </div>
+
+    <div class="footer">
+        <div class="footer-links">
+            <a href="#">Conditions of Use</a>
+            <a href="#">Privacy Notice</a>
+            <a href="#">Help</a>
+        </div>
+        <div class="footer-copy">
+            © 1996-2024, Amazon.com, Inc. or its affiliates
+        </div>
+    </div>
+
+    <script>
+        // Initialize Mock DB if not exists
+        if (!localStorage.getItem('users')) {
+            localStorage.setItem('users', JSON.stringify([]));
+        }
+
+        // Check if user is already logged in on load
+        document.addEventListener('DOMContentLoaded', () => {
+            checkSession();
+        });
+
+        function toggleAuthMode(mode) {
+            document.getElementById('auth-error-box').classList.remove('active');
+            if (mode === 'login') {
+                document.getElementById('login-container').style.display = 'block';
+                document.getElementById('register-container').style.display = 'none';
+            } else {
+                document.getElementById('login-container').style.display = 'none';
+                document.getElementById('register-container').style.display = 'block';
+            }
+        }
+
+        function showError(msg) {
+            const errorBox = document.getElementById('auth-error-box');
+            const errorMsg = document.getElementById('auth-error-msg');
+            errorMsg.innerText = msg;
+            errorBox.classList.add('active');
+        }
+
+        // Handle Registration
+        document.getElementById('register-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            document.getElementById('auth-error-box').classList.remove('active');
+            
+            const name = document.getElementById('reg-name').value.trim();
+            const email = document.getElementById('reg-email').value.trim().toLowerCase();
+            const password = document.getElementById('reg-password').value;
+            
+            if (!name || !email || !password) {
+                showError("All fields are required.");
+                return;
+            }
+            if (password.length < 6) {
+                showError("Minimum 6 characters required");
+                return;
+            }
+
+            let users = JSON.parse(localStorage.getItem('users'));
+            if (users.find(u => u.email === email)) {
+                showError("Email already registered.");
+                return;
+            }
+
+            const newUser = { name, email, password };
+            users.push(newUser);
+            localStorage.setItem('users', JSON.stringify(users));
+
+            createSession(newUser);
+        });
+
+        // Handle Login
+        document.getElementById('login-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            document.getElementById('auth-error-box').classList.remove('active');
+
+            const email = document.getElementById('login-email').value.trim().toLowerCase();
+            const password = document.getElementById('login-password').value;
+
+            let users = JSON.parse(localStorage.getItem('users'));
+            const user = users.find(u => u.email === email && u.password === password);
+
+            if (!user) {
+                showError("We cannot find an account with that email address or the password was incorrect.");
+                return;
+            }
+
+            createSession(user);
+        });
+
+        // Session Management
+        function createSession(user) {
+            const sessionObj = {
+                isLoggedIn: true,
+                loginTime: new Date().toISOString(),
+                user: {
+                    name: user.name,
+                    email: user.email
+                }
+            };
+
+            localStorage.setItem('session', JSON.stringify(sessionObj));
+            
+            document.getElementById('login-form').reset();
+            document.getElementById('register-form').reset();
+            
+            showDashboard();
+        }
+
+        function checkSession() {
+            const sessionData = localStorage.getItem('session');
+            if (sessionData) {
+                const session = JSON.parse(sessionData);
+                if (session.isLoggedIn) {
+                    showDashboard();
+                    return;
+                }
+            }
+            showAuth();
+        }
+
+        function logout() {
+            localStorage.removeItem('session');
+            showAuth();
+        }
+
+        // UI Views
+        function showDashboard() {
+            document.getElementById('auth-view').classList.remove('active');
+            document.getElementById('dashboard-view').classList.add('active');
+            
+            const session = JSON.parse(localStorage.getItem('session'));
+            document.getElementById('welcome-msg').innerText = `Welcome, ${session.user.name}!`;
+        }
+
+        function showAuth() {
+            document.getElementById('dashboard-view').classList.remove('active');
+            document.getElementById('auth-view').classList.add('active');
+            toggleAuthMode('login');
+        }
+    </script>
+</body>
+</html>
